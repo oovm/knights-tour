@@ -1,21 +1,9 @@
 use super::*;
-use std::{iter, iter::from_generator};
 
 const KNIGHTS_MOVES: &'static [(isize, isize)] = &[(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)];
 
-#[derive(Clone)]
-pub struct KnightsTourState {
-    size_x: isize,
-    size_y: isize,
-    current_x: isize,
-    current_y: isize,
-    back_to_start: bool,
-    visited: BTreeMap<(isize, isize), bool>,
-    path: Vec<(isize, isize)>,
-}
-
 impl KnightsTour {
-    pub fn get_state(&self) -> KnightsTourState {
+    pub fn initial_state(&self) -> KnightsTourState {
         let size_x = self.size.0 as isize;
         let size_y = self.size.1 as isize;
         let current_x = self.start.0 as isize;
@@ -48,6 +36,19 @@ impl KnightsTourState {
     pub fn set_visited(&mut self, x: isize, y: isize, visited: bool) {
         self.visited.insert((x, y), visited);
     }
+    pub fn go_grid(&mut self, x: isize, y: isize) {
+        self.set_visited(x, y, true);
+        self.current_x = x;
+        self.current_y = y;
+        self.path.push((x, y));
+    }
+    pub fn go_back(&mut self) {
+        if let Some((x, y)) = self.path.pop() {
+            self.set_visited(self.current_x, self.current_y, false);
+            self.current_x = x;
+            self.current_y = y;
+        }
+    }
 }
 
 impl KnightsTourState {
@@ -70,37 +71,31 @@ impl KnightsTourState {
 }
 
 impl<'i> IntoIterator for &'i KnightsTour {
-    type Item = Vec<(usize, usize)>;
+    type Item = KnightsTourState;
     type IntoIter = impl Iterator<Item = Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let mut stack: Vec<KnightsTourState> = vec![self.get_state()];
+        let mut stack = vec![self.initial_state()];
         from_generator(move || {
             while let Some(mut state) = stack.pop() {
                 if state.path.len() == state.count() {
-                    if state.back_to_start {
-                        if state.possible_moves().contains(&(state.current_x - state.size_x, state.current_y - state.size_y)) {
-                            state.path.push((state.current_x - state.size_x, state.current_y - state.size_y));
-                            yield state.path.iter().map(|(x, y)| (*x as usize, *y as usize)).collect();
-                            state.path.pop();
+                    match state.back_to_start {
+                        true => {
+                            let (x, y) = self.start;
+                            if state.current_x == x as isize && state.current_y == y as isize {
+                                yield state;
+                            }
+                        }
+                        false => {
+                            yield state;
                         }
                     }
-                    else {
-                        yield state.path.iter().map(|(x, y)| (*x as usize, *y as usize)).collect();
-                    }
+                    continue;
                 }
-                else {
-                    for (x, y) in state.possible_moves() {
-                        state.set_visited(x, y, true);
-                        state.path.push((x, y));
-                        state.current_x = x;
-                        state.current_y = y;
-                        stack.push(state.clone());
-                        state.set_visited(x, y, false);
-                        state.path.pop();
-                        state.current_x = state.path.last().unwrap().0;
-                        state.current_y = state.path.last().unwrap().1;
-                    }
+                for (x, y) in state.possible_moves() {
+                    state.go_grid(x, y);
+                    stack.push(state.clone());
+                    state.go_back();
                 }
             }
         })
@@ -109,8 +104,8 @@ impl<'i> IntoIterator for &'i KnightsTour {
 
 #[test]
 fn test_knights_tour() {
-    let mut state = KnightsTour { size: (5, 5), start: (0, 0), back_to_start: true };
+    let state = KnightsTour::new(6, 6);
     for i in state.into_iter().take(2) {
-        println!("{:?}", i);
+        println!("{:#?}", i);
     }
 }

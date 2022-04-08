@@ -1,11 +1,22 @@
 mod solve;
-
-use std::collections::{BTreeMap, BTreeSet};
+mod states;
+use std::{collections::BTreeMap, fmt::Display, iter::from_generator};
 
 pub struct KnightsTour {
     size: (usize, usize),
     start: (usize, usize),
     back_to_start: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct KnightsTourState {
+    size_x: isize,
+    size_y: isize,
+    current_x: isize,
+    current_y: isize,
+    back_to_start: bool,
+    visited: BTreeMap<(isize, isize), bool>,
+    path: Vec<(isize, isize)>,
 }
 
 impl KnightsTour {

@@ -8,7 +8,7 @@ pub struct KnightsTour {
     back_to_start: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct KnightsTourState {
     size_x: isize,
     size_y: isize,

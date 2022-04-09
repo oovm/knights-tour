@@ -101,11 +101,3 @@ impl<'i> IntoIterator for &'i KnightsTour {
         })
     }
 }
-
-#[test]
-fn test_knights_tour() {
-    let state = KnightsTour::new(6, 6);
-    for i in state.into_iter().take(2) {
-        println!("{:#?}", i);
-    }
-}

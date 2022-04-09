@@ -1,15 +1,14 @@
 #![feature(generators)]
 
-
 use std::io::Read;
-
 
 // mod knights;
 use gen_iter::GenIter;
 
 /// A vertex in graph
 pub trait Hamiltonian
-    where Self: Sized + Clone
+where
+    Self: Sized + Clone,
 {
     fn count(&self) -> usize;
     fn current(&self) -> usize;
@@ -32,7 +31,8 @@ pub fn backtracking<T: Hamiltonian>(mut graph: T) -> impl Iterator<Item = Vec<us
         while let Some((path, current)) = stack.pop() {
             if path.len() == graph.count() {
                 yield path;
-            } else {
+            }
+            else {
                 for next in graph.possible_moves(current) {
                     if !graph.get_visited(next) {
                         let mut new_path = path.clone();

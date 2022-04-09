@@ -6,3 +6,6 @@ mod knights;
 mod utils;
 
 pub use self::knights::{KnightsTour, KnightsTourState};
+mod render;
+
+pub use crate::render::SvgRender;

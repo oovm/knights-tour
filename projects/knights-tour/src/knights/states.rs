@@ -1,8 +1,8 @@
 use super::*;
-use crate::utils::format_point;
+use crate::{utils::format_point, SvgRender};
 use std::fmt::{Debug, Formatter};
 use svg::{
-    node::element::{path::Data, Circle, Line, Text},
+    node::element::{path::Data, Circle, Line, Rectangle, Text},
     Document,
 };
 
@@ -50,36 +50,39 @@ impl Display for KnightsTourState {
 }
 
 impl KnightsTourState {
-    pub fn draw_svg(&self) -> String {
-        let mut doc = Document::new().set("viewBox", (0, 0, self.size_x, self.size_y));
-        let mut data = Data::new();
-        for i in 0..self.size_x {
-            for j in 0..self.size_y {
-                let x = i as f64 + 0.5;
-                let y = j as f64 + 0.5;
-                let circle = Circle::new().set("cx", x).set("cy", y).set("r", 0.4).set("fill", "white");
-                doc = doc.add(circle);
-                if let Some(step) = self.path.iter().position(|&(a, b)| a == i && b == j) {
-                    let text = Text::new()
-                        .set("x", x)
-                        .set("y", y)
-                        .set("text-anchor", "middle")
-                        .set("dominant-baseline", "central")
-                        .set("font-size", 0.4)
-                        .set("fill", "black")
-                        .add(step.to_string());
-                    doc = doc.add(text);
-                }
-                if let Some(&(prev_x, prev_y)) = self.path.get(self.path.len() - 2) {
-                    if (prev_x, prev_y) == (i, j) {
-                        data = data.move_to((prev_x as f64 + 0.5, prev_y as f64 + 0.5));
-                        data = data.line_to((x, y));
-                    }
-                }
+    /// return a iterator of steps, each step is a tuple of two points
+    pub fn steps(&self) -> impl Iterator<Item = ((usize, usize), (usize, usize))> + '_ {
+        self.path.windows(2).map(|w| ((w[0].0 as usize, w[0].1 as usize), (w[1].0 as usize, w[1].1 as usize)))
+    }
+}
+
+impl KnightsTourState {
+    pub fn draw_svg(&self, render: &SvgRender) -> String {
+        let mut board = render.document(self.size_x as f32, self.size_y as f32);
+        // Draw the board squares
+        for x in 0..self.size_x {
+            for y in 0..self.size_y {
+                board = board.add(render.draw_square(x as usize, y as usize));
             }
         }
-        let path = Line::new().set("stroke", "black").set("stroke-width", 0.1).set("fill", "none").set("d", data);
-        doc = doc.add(path);
-        doc.to_string()
+        // Draw the path
+        for ((x1, y1), (x2, y2)) in self.steps() {
+            let line = render.draw_path();
+            board = board.add(line);
+        }
+
+        // Draw the step numbers
+        for (i, &(x, y)) in self.path.iter().enumerate() {
+            let text = Text::new()
+                .set("x", x * 50 + 25)
+                .set("y", y * 50 + 35)
+                .set("text-anchor", "middle")
+                .set("font-size", 20)
+                .set("fill", "#000000")
+                .add(svg::node::Text::new((i + 1).to_string()));
+            board = board.add(text);
+        }
+
+        board.to_string()
     }
 }

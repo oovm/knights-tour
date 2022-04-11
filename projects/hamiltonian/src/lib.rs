@@ -2,7 +2,7 @@
 
 use std::io::Read;
 
-// mod knights;
+// mod states;
 use gen_iter::GenIter;
 
 /// A vertex in graph

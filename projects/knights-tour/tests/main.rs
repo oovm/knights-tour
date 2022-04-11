@@ -1,4 +1,5 @@
 use knights_tour::{KnightsTour, SvgRender};
+use std::fs::create_dir_all;
 
 #[test]
 fn ready() {
@@ -7,14 +8,13 @@ fn ready() {
 
 #[test]
 fn test_knights_tour() {
-    let state = KnightsTour::new(5, 5).with_back_to_start(false);
-    for i in state.into_iter().take(2) {
+    let knights = KnightsTour::new(5, 5).walk(true);
+    create_dir_all("target/").unwrap();
+    for (index, state) in knights.into_iter().take(10).enumerate() {
         // write string to file\
         let render = SvgRender::default();
-        let svg = i.draw_svg(&render);
-        let file = format!("s.svg");
+        let svg = state.draw_svg(&render);
+        let file = format!("target/step_{}.svg", index);
         std::fs::write(file, svg).unwrap();
-        println!("{}", i);
-        println!("{:#?}", i);
     }
 }

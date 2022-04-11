@@ -1,28 +1,6 @@
 use super::*;
 
-const KNIGHTS_MOVES: &'static [(isize, isize)] = &[(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)];
-
-impl KnightsTour {
-    pub fn initial_state(&self) -> KnightsTourState {
-        let size_x = self.size.0 as isize;
-        let size_y = self.size.1 as isize;
-        let current_x = self.start.0 as isize;
-        let current_y = self.start.1 as isize;
-        let mut state = KnightsTourState {
-            size_x,
-            size_y,
-            current_x,
-            current_y,
-            back_to_start: self.back_to_start,
-            visited: Default::default(),
-            path: vec![],
-        };
-        state.initialize();
-        state
-    }
-}
-
-impl KnightsTourState {
+impl ChessWalkState {
     pub fn initialize(&mut self) {
         self.visited.insert((self.current_x, self.current_y), true);
         self.path.push((self.current_x, self.current_y));
@@ -49,19 +27,33 @@ impl KnightsTourState {
             self.current_y = y;
         }
     }
+    pub fn must_back_to_start(&self) -> bool {
+        self.back_to_start && self.path.len() == self.count() - 1
+    }
+    pub fn is_traversed(&self) -> bool {
+        self.path.len() == self.count()
+    }
+    pub fn is_traversed_back(&self) -> bool {
+        self.is_traversed() && self.path[0] == (self.current_x, self.current_y)
+    }
 }
 
-impl KnightsTourState {
+impl ChessWalkState {
     fn possible_moves(&self) -> Vec<(isize, isize)> {
-        KNIGHTS_MOVES
+        self.available_moves
             .iter()
             .filter_map(|(dx, dy)| {
                 let x = self.current_x + dx;
                 let y = self.current_y + dy;
-                if x < 0 || x >= self.size_x || y < 0 || y >= self.size_y {
+                if x < 0 || y < 0 || x >= self.size_x || y >= self.size_y {
                     return None;
                 }
-                if self.get_visited(x, y) {
+                if self.must_back_to_start() {
+                    if (x, y) != self.path[0] {
+                        return None;
+                    }
+                }
+                else if self.get_visited(x, y) {
                     return None;
                 }
                 Some((x, y))
@@ -71,26 +63,23 @@ impl KnightsTourState {
 }
 
 impl<'i> IntoIterator for &'i KnightsTour {
-    type Item = KnightsTourState;
+    type Item = ChessWalkState;
     type IntoIter = impl Iterator<Item = Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
         let mut stack = vec![self.initial_state()];
         from_generator(move || {
             while let Some(mut state) = stack.pop() {
-                if state.path.len() == state.count() {
-                    match state.back_to_start {
-                        true => {
-                            let (x, y) = self.start;
-                            if state.current_x == x as isize && state.current_y == y as isize {
-                                yield state;
-                            }
-                        }
-                        false => {
-                            yield state;
-                        }
+                match self.back_to_start {
+                    true if state.is_traversed_back() => {
+                        yield state;
+                        continue;
                     }
-                    continue;
+                    false if state.is_traversed() => {
+                        yield state;
+                        continue;
+                    }
+                    _ => {}
                 }
                 for (x, y) in state.possible_moves() {
                     state.go_grid(x, y);

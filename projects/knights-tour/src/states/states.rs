@@ -1,12 +1,6 @@
 use super::*;
-use crate::{utils::format_point, SvgRender};
-use std::fmt::{Debug, Formatter};
-use svg::{
-    node::element::{path::Data, Circle, Line, Rectangle, Text},
-    Document,
-};
 
-impl Debug for KnightsTourState {
+impl Debug for ChessWalkState {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let start = self.path.first().unwrap_or(&(0, 0));
         f.debug_struct("KnightsTourState")
@@ -19,7 +13,7 @@ impl Debug for KnightsTourState {
     }
 }
 
-impl Display for KnightsTourState {
+impl Display for ChessWalkState {
     // write a board, number is the step
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for y in 0..self.size_y {
@@ -49,38 +43,32 @@ impl Display for KnightsTourState {
     }
 }
 
-impl KnightsTourState {
+impl ChessWalkState {
     /// return a iterator of steps, each step is a tuple of two points
     pub fn steps(&self) -> impl Iterator<Item = ((usize, usize), (usize, usize))> + '_ {
         self.path.windows(2).map(|w| ((w[0].0 as usize, w[0].1 as usize), (w[1].0 as usize, w[1].1 as usize)))
     }
 }
 
-impl KnightsTourState {
+impl ChessWalkState {
     pub fn draw_svg(&self, render: &SvgRender) -> String {
         let mut board = render.document(self.size_x as f32, self.size_y as f32);
         // Draw the board squares
         for x in 0..self.size_x {
             for y in 0..self.size_y {
-                board = board.add(render.draw_square(x as usize, y as usize));
+                board = board.add(render.draw_square(x, y));
             }
         }
-        // Draw the path
-        for ((x1, y1), (x2, y2)) in self.steps() {
-            let line = render.draw_path();
-            board = board.add(line);
+        // Draw the path and point
+        for path in self.path.windows(2) {
+            board = board.add(render.draw_path(path[0].0, path[0].1, path[1].0, path[1].1));
+            board = board.add(render.draw_point(path[0].0, path[0].1));
         }
+        board = board.add(render.draw_point(self.current_x, self.current_y));
 
         // Draw the step numbers
         for (i, &(x, y)) in self.path.iter().enumerate() {
-            let text = Text::new()
-                .set("x", x * 50 + 25)
-                .set("y", y * 50 + 35)
-                .set("text-anchor", "middle")
-                .set("font-size", 20)
-                .set("fill", "#000000")
-                .add(svg::node::Text::new((i + 1).to_string()));
-            board = board.add(text);
+            board = board.add(render.draw_step(x, y, i));
         }
 
         board.to_string()

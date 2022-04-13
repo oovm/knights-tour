@@ -1,18 +1,19 @@
 use super::*;
 
-impl Debug for ChessPathState {
+impl Debug for ChessTourState {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let start = self.path.first().unwrap_or(&(0, 0));
         f.debug_struct("KnightsTourState")
             .field("size", &format_point(self.size_x, self.size_y))
             .field("start", &format_point(start.0, start.1))
             .field("end", &format_point(self.current_x, self.current_y))
+            .field("back_to_start", &self.back_to_start)
             .field("path", &self.path)
             .finish()
     }
 }
 
-impl Display for ChessPathState {
+impl Display for ChessTourState {
     // write a board, number is the step
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for y in 0..self.size_y {
@@ -42,14 +43,14 @@ impl Display for ChessPathState {
     }
 }
 
-impl ChessPathState {
+impl ChessTourState {
     /// return a iterator of steps, each step is a tuple of two points
     pub fn steps(&self) -> impl Iterator<Item = ((usize, usize), (usize, usize))> + '_ {
         self.path.windows(2).map(|w| ((w[0].0 as usize, w[0].1 as usize), (w[1].0 as usize, w[1].1 as usize)))
     }
 }
 
-impl ChessPathState {
+impl ChessTourState {
     pub fn draw_svg(&self, render: &SvgRender) -> String {
         let mut board = render.document(self.size_x as f32, self.size_y as f32);
         // Draw the board squares

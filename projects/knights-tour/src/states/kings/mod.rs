@@ -1,12 +1,12 @@
 use super::*;
 
-pub struct KnightsTour {
+pub struct KingTour {
     size: (usize, usize),
     start: (usize, usize),
     back_to_start: bool,
 }
 
-impl KnightsTour {
+impl KingTour {
     pub fn initial_state(&self) -> ChessTourState {
         let size_x = self.size.0 as isize;
         let size_y = self.size.1 as isize;
@@ -27,9 +27,9 @@ impl KnightsTour {
     }
 }
 
-impl KnightsTour {
+impl KingTour {
     pub fn new(width: usize, height: usize) -> Self {
-        KnightsTour { size: (width, height), start: (0, 0), back_to_start: false }
+        KingTour { size: (width, height), start: (0, 0), back_to_start: false }
     }
     pub fn with_start(mut self, x: usize, y: usize) -> Self {
         let x = if x < self.size.0 { x } else { self.size.0 - 1 };

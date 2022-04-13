@@ -1,11 +1,11 @@
 use super::*;
 
-impl ChessPathState {
+impl ChessTourState {
     pub fn initialize(&mut self) {
         self.visited.insert((self.current_x, self.current_y), true);
         self.path.push((self.current_x, self.current_y));
     }
-    pub fn count(&self) -> usize {
+    fn count(&self) -> usize {
         (self.size_x * self.size_y) as usize
     }
     pub fn get_visited(&self, x: isize, y: isize) -> bool {
@@ -27,12 +27,18 @@ impl ChessPathState {
             self.current_y = y;
         }
     }
+    pub fn must_back_to_start(&self) -> bool {
+        self.back_to_start && self.path.len() == self.count() - 1
+    }
     pub fn is_traversed(&self) -> bool {
         self.path.len() == self.count()
     }
+    pub fn is_traversed_back(&self) -> bool {
+        self.is_traversed() && self.path[0] == (self.current_x, self.current_y)
+    }
 }
 
-impl ChessPathState {
+impl ChessTourState {
     fn possible_moves(&self) -> Vec<(isize, isize)> {
         self.available_moves
             .iter()
@@ -42,6 +48,11 @@ impl ChessPathState {
                 if x < 0 || y < 0 || x >= self.size_x || y >= self.size_y {
                     return None;
                 }
+                if self.must_back_to_start() {
+                    if (x, y) != self.path[0] {
+                        return None;
+                    }
+                }
                 else if self.get_visited(x, y) {
                     return None;
                 }
@@ -49,13 +60,26 @@ impl ChessPathState {
             })
             .collect()
     }
-    pub fn solving(&self) -> impl Iterator<Item = ChessPathState> {
-        let mut stack = vec![self.clone()];
+}
+
+impl<'i> IntoIterator for &'i KnightsTour {
+    type Item = ChessTourState;
+    type IntoIter = impl Iterator<Item = Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut stack = vec![self.initial_state()];
         from_generator(move || {
             while let Some(mut state) = stack.pop() {
-                if state.is_traversed() {
-                    yield state;
-                    continue;
+                match state.back_to_start {
+                    true if state.is_traversed_back() => {
+                        yield state;
+                        continue;
+                    }
+                    false if state.is_traversed() => {
+                        yield state;
+                        continue;
+                    }
+                    _ => {}
                 }
                 for (x, y) in state.possible_moves() {
                     state.go_grid(x, y);

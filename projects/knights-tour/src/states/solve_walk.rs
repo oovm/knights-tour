@@ -1,13 +1,6 @@
 use super::*;
 
 impl ChessTourState {
-    pub fn initialize(&mut self) {
-        self.visited.insert((self.current_x, self.current_y), true);
-        self.path.push((self.current_x, self.current_y));
-    }
-    fn count(&self) -> usize {
-        (self.size_x * self.size_y) as usize
-    }
     pub fn get_visited(&self, x: isize, y: isize) -> bool {
         *self.visited.get(&(x, y)).unwrap_or(&false)
     }

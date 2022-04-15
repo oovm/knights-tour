@@ -5,7 +5,9 @@ mod states;
 
 mod utils;
 
-pub use self::states::{ChessTourState, KnightsTour};
+pub use self::states::ChessTourState;
 mod render;
 
 pub use crate::render::SvgRender;
+mod roles;
+pub use self::roles::{ChessRole, Chessboard};

@@ -1,11 +1,6 @@
-mod kings;
-mod knights;
-mod solve_walk;
-mod states;
-
+mod display;
 mod solve_tour;
 
-pub use self::knights::KnightsTour;
 use crate::{utils::format_point, SvgRender};
 use std::{
     collections::BTreeMap,
@@ -40,14 +35,6 @@ impl ChessTourState {
         };
         state.initialize();
         state
-    }
-    pub fn with_start(mut self) -> Self {
-        let x = if x < self.size_x as usize { x } else { self.size_x as usize - 1 };
-        let y = if y < self.size_y as usize { y } else { self.size_y as usize - 1 };
-        self.current_x = x as isize;
-        self.current_y = y as isize;
-        self.initialize();
-        self
     }
     pub fn with_moves(mut self, moves: Vec<(isize, isize)>) -> Self {
         self.available_moves = moves;

@@ -15,8 +15,8 @@ impl Default for SvgRender {
     fn default() -> Self {
         Self {
             grid_size: 100.0,
-            board_white: "#ffcf9e".to_string(),
-            board_black: "#d18a47".to_string(),
+            board_white: "#FFCF9E".to_string(),
+            board_black: "#D18A47".to_string(),
             path_color: "#FF0000".to_string(),
             path_width: 6.0,
         }

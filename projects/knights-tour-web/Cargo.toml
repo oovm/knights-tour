@@ -1,5 +1,6 @@
 [package]
-name = "knights-tour"
+name = "knights-tour-web"
+publish = false
 version = "0.0.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "..."
@@ -10,7 +11,10 @@ license = "MPL-2.0"
 edition = "2021"
 
 [dependencies]
-svg = "0.13.0"
+dioxus = "0.3.2"
+
+[dependencies.knights-tour]
+path = "../knights-tour"
 
 [dev-dependencies]
 

@@ -1,10 +1,10 @@
 use crate::ChessTourState;
 
 pub struct Chessboard {
-    role: ChessRole,
-    size: (usize, usize),
-    start: (usize, usize),
-    back_to_start: bool,
+    pub role: ChessRole,
+    pub size: (usize, usize),
+    pub start: (usize, usize),
+    pub back_to_start: bool,
 }
 
 pub enum ChessRole {

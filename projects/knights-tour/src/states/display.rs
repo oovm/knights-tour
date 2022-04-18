@@ -68,7 +68,10 @@ impl ChessTourState {
 
         // Draw the step numbers
         for (i, &(x, y)) in self.path.iter().enumerate() {
-            board = board.add(render.draw_step(x, y, i));
+            if i == self.count() {
+                continue;
+            }
+            board = board.add(render.draw_step(x, y, i + 1));
         }
 
         board.to_string()

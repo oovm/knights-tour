@@ -11,6 +11,7 @@ edition = "2021"
 
 [dependencies]
 svg = "0.13.0"
+rand = { version = "0.8.5", features = ["small_rng"] }
 
 [dev-dependencies]
 

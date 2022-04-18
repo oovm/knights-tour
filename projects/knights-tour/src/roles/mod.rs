@@ -36,7 +36,7 @@ impl Chessboard {
 
 impl Chessboard {
     pub fn new(width: usize, height: usize) -> Self {
-        Chessboard { role: ChessRole::Knight, size: (width, height), start: (0, 0), back_to_start: false }
+        Chessboard { role: ChessRole::Knight, size: (width, height), start: (0, 0), back_to_start: true }
     }
     pub fn with_start(mut self, x: usize, y: usize) -> Self {
         let x = if x < self.size.0 { x } else { self.size.0 - 1 };
@@ -63,6 +63,6 @@ impl IntoIterator for Chessboard {
     type IntoIter = impl Iterator<Item = Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.initial_state().solving()
+        self.initial_state().backtrack()
     }
 }

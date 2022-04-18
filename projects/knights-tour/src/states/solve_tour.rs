@@ -1,5 +1,6 @@
 use super::*;
-use rand::prelude::SliceRandom;
+use itertools::Itertools;
+use rand::{prelude::SliceRandom, thread_rng};
 
 impl ChessTourState {
     pub fn get_visited(&self, x: isize, y: isize) -> bool {
@@ -33,7 +34,7 @@ impl ChessTourState {
 }
 
 impl ChessTourState {
-    fn possible_moves(&self) -> Vec<(isize, isize)> {
+    pub fn moves_available(&self) -> Vec<(isize, isize)> {
         self.available_moves
             .iter()
             .filter_map(|(dx, dy)| {
@@ -67,7 +68,7 @@ impl ChessTourState {
                     yield state;
                     continue;
                 }
-                for (x, y) in state.possible_moves() {
+                for (x, y) in state.moves_available() {
                     state.go_grid(x, y);
                     stack.push(state.clone());
                     state.go_back();
@@ -78,48 +79,41 @@ impl ChessTourState {
 }
 
 impl ChessTourState {
-    pub fn warnsdorff_rule(self) -> impl Iterator<Item = Self> {
-        let mut state = self;
-        let mut rng = rand::thread_rng();
-        while !state.is_traversed() {
-            let moves = state.possible_moves();
-            if moves.is_empty() {
-                break;
+    pub fn best_moves(&self) -> Vec<(isize, isize)> {
+        let mut moves_scores = vec![];
+        let mut min_score = usize::MAX;
+        for (x, y) in self.moves_available() {
+            let mut score = 0;
+            for (dx, dy) in self.available_moves.iter() {
+                let nx = x + dx;
+                let ny = y + dy;
+                if nx >= 0 && ny >= 0 && nx < self.size_x && ny < self.size_y && !self.get_visited(nx, ny) {
+                    score += 1;
+                }
             }
-            let mut moves_scores: Vec<(isize, isize, usize)> = moves
-                .iter()
-                .map(|(x, y)| {
-                    (
-                        *x,
-                        *y,
-                        state
-                            .available_moves
-                            .iter()
-                            .filter(|(dx, dy)| {
-                                let nx = x + dx;
-                                let ny = y + dy;
-                                if state.must_back_to_start() {
-                                    if (nx, ny) == state.path[0] {
-                                        return true;
-                                    }
-                                    return false;
-                                }
-                                nx >= 0 && ny >= 0 && nx < state.size_x && ny < state.size_y && !state.get_visited(nx, ny)
-                            })
-                            .count(),
-                    )
-                })
-                .collect();
-            moves_scores.sort_by_key(|(_, _, score)| *score);
-            let (_, _, min_score) = moves_scores[0];
-            let best_moves: Vec<(isize, isize)> =
-                moves_scores.into_iter().filter(|(_, _, score)| *score == min_score).map(|(x, y, _)| (x, y)).collect();
-            let (x, y) = *best_moves.choose(&mut rng).unwrap();
-            state.go_grid(x, y);
+            if score < min_score {
+                min_score = score;
+            }
+            moves_scores.push((x, y, score));
         }
-        if state.is_traversed_back() {
-            state.go_back();
-        }
-        std::iter::once(state)
+        moves_scores.into_iter().filter(|(_, _, score)| *score == min_score).map(|(x, y, _)| (x, y)).collect_vec()
+    }
+
+    pub fn warnsdorff_rule(&self) -> impl Iterator<Item = Self> {
+        let state = self.clone();
+        let mut rng = thread_rng();
+        from_generator(move || {
+            'outer: loop {
+                let mut state = state.clone();
+                while !state.is_traversed_back() {
+                    let best_moves = state.best_moves();
+                    match best_moves.choose(&mut rng) {
+                        Some((x, y)) => state.go_grid(*x, *y),
+                        None => continue 'outer,
+                    }
+                }
+                yield state
+            }
+        })
     }
 }

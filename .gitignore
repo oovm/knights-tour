@@ -5,6 +5,7 @@ time-travel.*
 
 # IDE
 .vscode/
+dist/
 .vs/
 .idea/
 *.iml

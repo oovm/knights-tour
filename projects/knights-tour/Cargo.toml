@@ -1,8 +1,8 @@
 [package]
 name = "knights-tour"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "..."
+description = "Heuristic search on knight's tour"
 repository = "https://github.com/oovm/knights-tour"
 documentation = "https://docs.rs/knights-tour"
 readme = "readme.md"

@@ -1,6 +1,6 @@
 use super::*;
 use itertools::Itertools;
-use rand::{prelude::SliceRandom, rngs::SmallRng, SeedableRng};
+use rand::{prelude::SliceRandom, rngs::SmallRng, Rng, SeedableRng};
 
 impl ChessTourState {
     pub fn get_visited(&self, x: isize, y: isize) -> bool {
@@ -15,11 +15,15 @@ impl ChessTourState {
         self.current_y = y;
         self.path.push((x, y));
     }
-    pub fn go_back(&mut self) {
-        if let Some((x, y)) = self.path.pop() {
-            self.set_visited(self.current_x, self.current_y, false);
-            self.current_x = x;
-            self.current_y = y;
+    pub fn go_back(&mut self, steps: usize) {
+        assert!(self.path.len() > steps);
+        let head = self.path.len() - steps;
+        self.current_x = self.path[head - 1].0;
+        self.current_y = self.path[head - 1].1;
+        // split to two parts, head and tail, set all tail to unvisited
+        let out = self.path.drain(head..);
+        for (x, y) in out {
+            self.visited.insert((x, y), false);
         }
     }
     pub fn must_back_to_start(&self) -> bool {
@@ -69,7 +73,7 @@ impl ChessTourState {
                 for (x, y) in state.available_moves() {
                     state.go_grid(x, y);
                     stack.push(state.clone());
-                    state.go_back();
+                    state.go_back(1);
                 }
             }
         })
@@ -107,7 +111,9 @@ impl ChessTourState {
                     let best_moves = state.best_moves();
                     match best_moves.choose(&mut rng) {
                         Some((x, y)) => state.go_grid(*x, *y),
-                        // 最佳走法为空，说明已经走到死胡同，回溯也没用, 直接推倒重来
+                        // 最佳走法为空，说明已经走到死胡同，尝试回溯
+                        None if rng.gen_bool(0.9) => state.go_back(rng.gen_range(2..state.path.len() / 2)),
+                        // 多次触发说明回溯也没用, 直接推倒重来
                         None => continue 'outer,
                     }
                 }
